@@ -7,6 +7,26 @@ exports.sourceNodes = async ({ boundActionCreators: { createNode } }, { username
     baseURL: `https://api.behance.net/v2/`,
   })
 
+  // Thanks to https://github.com/Jedidiah/gatsby-source-twitch/blob/master/src/gatsby-node.js
+  // and https://stackoverflow.com/questions/43482639/throttling-axios-requests
+  const rateLimit = 500
+  let lastCalled = undefined
+
+  const rateLimiter = (call) => {
+    const now = Date.now()
+    if (lastCalled) {
+      lastCalled += rateLimit
+      const wait = (lastCalled - now)
+      if (wait > 0) {
+        return new Promise((resolve) => setTimeout(() => resolve(call), wait))
+      }
+    }
+    lastCalled = now
+    return call
+  }
+
+  axiosClient.interceptors.request.use(rateLimiter)
+
   const { data: { projects } } = await axiosClient.get(`/users/${username}/projects?client_id=${apiKey}`)
 
   function convertDate (date) {

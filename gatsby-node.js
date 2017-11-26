@@ -12,6 +12,30 @@ exports.sourceNodes = (() => {
       baseURL: `https://api.behance.net/v2/`
     });
 
+    // Thanks to https://github.com/Jedidiah/gatsby-source-twitch/blob/master/src/gatsby-node.js
+    // and https://stackoverflow.com/questions/43482639/throttling-axios-requests
+    const rateLimit = 500;
+    let lastCalled = undefined;
+
+    const rateLimiter = function rateLimiter(call) {
+      const now = Date.now();
+      if (lastCalled) {
+        lastCalled += rateLimit;
+        const wait = lastCalled - now;
+        if (wait > 0) {
+          return new Promise(function (resolve) {
+            return setTimeout(function () {
+              return resolve(call);
+            }, wait);
+          });
+        }
+      }
+      lastCalled = now;
+      return call;
+    };
+
+    axiosClient.interceptors.request.use(rateLimiter);
+
     var _ref2 = yield axiosClient.get(`/users/${username}/projects?client_id=${apiKey}`);
 
     const projects = _ref2.data.projects;
