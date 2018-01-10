@@ -3,7 +3,7 @@
 
 Learn more about [Gatsby](https://www.gatsbyjs.org/) and its plugins here: [https://www.gatsbyjs.org/docs/plugins/](https://www.gatsbyjs.org/docs/plugins/)
 
-**See it in live action on the [example site]()!**
+**See it in live action on the [example site](https://confident-perlman-063f75.netlify.com/)!**
 
 ## Install
 
