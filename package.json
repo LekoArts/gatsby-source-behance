@@ -1,6 +1,6 @@
 {
   "name": "gatsby-source-behance",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Gatsby source plugin for loading information from Behance",
   "main": "gatsby-node.js",
   "scripts": {
@@ -23,8 +23,7 @@
   "author": "LekoArts <hello@lekoarts.de>",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.17.1",
-    "date-fns": "^1.29.0"
+    "axios": "^0.17.1"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",

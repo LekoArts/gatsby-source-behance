@@ -1,8 +1,11 @@
 const crypto = require(`crypto`)
 const axios = require(`axios`)
-const format = require(`date-fns/format`)
 
-exports.sourceNodes = async ({ boundActionCreators: { createNode } }, { username, apiKey, dateFormat }) => {
+exports.sourceNodes = async ({ boundActionCreators: { createNode } }, { username, apiKey }) => {
+  if (!username || !apiKey) {
+    throw 'You need to define username and apiKey'
+  }
+
   const axiosClient = axios.create({
     baseURL: `https://api.behance.net/v2/`,
   })
@@ -28,39 +31,73 @@ exports.sourceNodes = async ({ boundActionCreators: { createNode } }, { username
   axiosClient.interceptors.request.use(rateLimiter)
 
   const { data: { projects } } = await axiosClient.get(`/users/${username}/projects?client_id=${apiKey}`)
+  const { data: { user } } = await axiosClient.get(`/users/${username}?client_id=${apiKey}`)
 
-  function convertDate (date) {
-    let legible = new Date(1000*date)
-    legible = legible.toString()
-    return legible
-  }
+  const jsonStringUser = JSON.stringify(user)
 
-  projects.map(async (project) => {
-    const projectData = (await axiosClient.get(`/projects/${project.id}?client_id=${apiKey}`)).data
+  projects.map(project => {
+    /* 
+    * Sadly this is not working as intended. Help on this part is much appreciated!
+    * 
+    * const projectResponse = await axiosClient.get(`/projects/${project.id}?client_id=${apiKey}`)
+    * const projectData = projectResponse.data.project
+    */
 
     const jsonString = JSON.stringify(project)
 
     const projectListNode = {
       name: project.name,
       projectID: project.id,
-      published: format(convertDate(project.published_on), dateFormat),
-      created: format(convertDate(project.created_on), dateFormat),
-      modified: format(convertDate(project.modified_on), dateFormat),
-      conceived: format(convertDate(project.conceived_on), dateFormat),
+      published: project.published_on,
+      created: project.created_on,
+      modified: project.modified_on,
+      conceived: project.conceived_on,
       url: project.url,
+      areas: project.fields,
       cover: project.covers.original,
-      views: project.stats.views,
-      appreciations: project.stats.appreciations,
-      comments: project.stats.comments,
-      description: projectData.description,
+      stats: project.stats,
       children: [],
       id: project.id.toString(),
       parent: `__SOURCE__`,
       internal: {
-        type: `Behance`,
+        type: `BehanceProjects`,
         contentDigest: crypto.createHash(`md5`).update(jsonString).digest(`hex`),
       },
     }
     createNode(projectListNode)
   })
+
+  const userNode = {
+    userID: user.id,
+    names: {
+      firstName: user.first_name,
+      lastName: user.last_name,
+      username: user.username,
+      displayName: user.display_name,
+    },
+    url: user.url,
+    website: user.website,
+    avatar: user.images['276'],
+    company: user.company,
+    place: {
+      city: user.city,
+      state: user.state,
+      country: user.country,
+      location: user.location,
+    },
+    areas: user.fields,
+    stats: user.stats,
+    links: user.links,
+    sections: user.sections,
+    socialMedia: user.social_links,
+    children: [],
+    id: user.id.toString(),
+    parent: `__SOURCE__`,
+    internal: {
+      type: `BehanceUser`,
+      contentDigest: crypto.createHash(`md5`).update(jsonStringUser).digest(`hex`)
+    }
+  }
+
+  createNode(userNode)
 }
