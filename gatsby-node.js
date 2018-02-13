@@ -1,5 +1,7 @@
 'use strict';
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 const crypto = require(`crypto`);
@@ -47,40 +49,95 @@ exports.sourceNodes = (() => {
 
     const user = _ref3.data.user;
 
-
     const jsonStringUser = JSON.stringify(user);
 
-    projects.map(function (project) {
-      /* 
-      * Sadly this is not working as intended. Help on this part is much appreciated!
-      * 
-      * const projectResponse = await axiosClient.get(`/projects/${project.id}?client_id=${apiKey}`)
-      * const projectData = projectResponse.data.project
-      */
-
-      const jsonString = JSON.stringify(project);
-
-      const projectListNode = {
-        name: project.name,
-        projectID: project.id,
-        published: project.published_on,
-        created: project.created_on,
-        modified: project.modified_on,
-        conceived: project.conceived_on,
-        url: project.url,
-        areas: project.fields,
-        cover: project.covers.original,
-        stats: project.stats,
-        children: [],
-        id: project.id.toString(),
-        parent: `__SOURCE__`,
-        internal: {
-          type: `BehanceProjects`,
-          contentDigest: crypto.createHash(`md5`).update(jsonString).digest(`hex`)
-        }
-      };
-      createNode(projectListNode);
+    // Collect all IDs of the projects 
+    const projectIDs = [];
+    projects.forEach(function (project) {
+      return projectIDs.push(project.id);
     });
+
+    // Request detailed information about each project
+    const requests = [];
+    projectIDs.forEach(function (id) {
+      return requests.push(axiosClient.get(`/projects/${id}?client_id=${apiKey}`));
+    });
+    const projectsDetailed = yield Promise.all(requests).map(function (request) {
+      return request.data.project;
+    });
+
+    // Create node for each project
+    projectsDetailed.map((() => {
+      var _ref4 = _asyncToGenerator(function* (project) {
+
+        // Transform the properties that have numbers as keys
+        project.covers = Object.entries(project.covers).map(function (cover) {
+          return { size: cover[0], url: cover[1] };
+        });
+
+        project.owners = project.owners.map(function (owner) {
+          const images = Object.entries(owner.images).map(function (image) {
+            return { key: image[0], url: image[1] };
+          });
+
+          return _extends({}, owner, { images });
+        });
+
+        project.modules = project.modules.map(function (module) {
+          const sizes = Object.entries(module.sizes).map(function (size) {
+            return { size: size[0], url: size[1] };
+          });
+          const dimensions = Object.entries(module.dimensions).map(function (dimension) {
+            return { size: dimension[0], dimensions: dimension[1] };
+          });
+          return _extends({}, module, { sizes, dimensions });
+        });
+
+        const jsonString = JSON.stringify(project);
+
+        const projectListNode = {
+          projectID: project.id,
+          name: project.name,
+          published: project.published_on,
+          created: project.created_on,
+          modified: project.modified_on,
+          url: project.url,
+          privacy: project.privacy,
+          areas: project.fields,
+          covers: project.covers,
+          matureContent: project.mature_content,
+          matureAccess: project.mature_access,
+          owners: project.owners,
+          stats: project.stats,
+          conceived: project.conceived_on,
+          canvasWidth: project.canvas_width,
+          tags: project.tags,
+          description: project.description,
+          editorVersion: project.editor_version,
+          allowComments: project.allow_comments,
+          modules: project.modules,
+          shortURL: project.short_url,
+          copyright: project.copyright,
+          tools: project.tools,
+          styles: project.styles,
+          creatorID: project.creator_id,
+
+          children: [],
+          id: project.id.toString(),
+          parent: `__SOURCE__`,
+          internal: {
+            type: `BehanceProjects`,
+            contentDigest: crypto.createHash(`md5`).update(jsonString).digest(`hex`)
+          }
+        };
+
+        createNode(projectListNode);
+      });
+
+      return function (_x3) {
+        return _ref4.apply(this, arguments);
+      };
+    })());
 
     const userNode = {
       userID: user.id,
