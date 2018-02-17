@@ -35,44 +35,54 @@ exports.sourceNodes = async ({ boundActionCreators: { createNode } }, { username
   const jsonStringUser = JSON.stringify(user)
 
   // Collect all IDs of the projects
-  const projectIDs = []
-  projects.forEach(project => projectIDs.push(project.id));
+  const projectIDs = projects.map(project => project.id)
 
   // Request detailed information about each project
-  const requests = []
-  projectIDs.forEach(id => requests.push(axiosClient.get(`/projects/${id}?client_id=${apiKey}`)))
+  const requests = projectIDs.map(id => axiosClient.get(`/projects/${id}?client_id=${apiKey}`))
   const projectsDetailed = await Promise.all(requests).map(request => request.data.project)
 
   // Create node for each project
   projectsDetailed.map(async project => {
-
     // Transform the properties that have numbers as keys
-    project.covers =
+    project.covers = (
       Object.entries(project.covers)
-      .map(cover => ({ size: cover[0], url: cover[1] }))
+      .map(cover => ({ dimension: cover[0], url: cover[1] }))
+    )
 
-    project.owners = project.owners.map(owner => {
-      const images =
-        Object.entries(owner.images)
-        .map(image => ({ key: image[0], url: image[1] }))
-
-      return { ...owner, images }
-    })
+    project.owners = project.owners.map(owner => ({
+      ...owner,
+      images: Object.entries(owner.images)
+        .map(image => ({ dimension: image[0], url: image[1] }))
+    }))
 
     project.modules = project.modules.map(module => {
-      const sizes =
-        Object.entries(module.sizes)
-        .map(size => ({ size: size[0], url: size[1] }))
-
-      const dimensions =
-        Object.entries(module.dimensions)
-        .map(dimension => ({ size: dimension[0], dimensions: dimension[1] }))
-
-      return { ...module, sizes, dimensions }
+      if (module.type === 'image') {
+        return {
+          ...module,
+          sizes: Object.entries(module.sizes)
+            .map(size => ({ dimension: size[0], url: size[1] })),
+          dimensions: Object.entries(module.dimensions)
+            .map(dimension => ({ dimension: dimension[0], ...dimension[1] })),
+          }
+        } else if (module.type === 'media_collection') {
+          return {
+            ...module,
+            components: module.components.map(component => ({
+              ...component,
+              sizes: Object.entries(component.sizes)
+                .map(size => ({ dimension: size[0], url: size[1] })),
+              dimensions: Object.entries(component.dimensions)
+                .map(dimension => ({ dimension: dimension[0], ...dimension[1] })),
+          }))
+        }
+      } else {
+        return module
+      }
     })
 
     const jsonString = JSON.stringify(project)
 
+    // List out all the fields
     const projectListNode = {
       projectID: project.id,
       name: project.name,

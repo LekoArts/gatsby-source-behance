@@ -51,10 +51,9 @@ exports.sourceNodes = (() => {
 
     const jsonStringUser = JSON.stringify(user);
 
-    // Collect all IDs of the projects 
-    const projectIDs = [];
-    projects.forEach(function (project) {
-      return projectIDs.push(project.id);
+    // Collect all IDs of the projects
+    const projectIDs = projects.map(function (project) {
+      return project.id;
     });
 
     // Request detailed information about each project
@@ -62,6 +61,11 @@ exports.sourceNodes = (() => {
     projectIDs.forEach(function (id) {
       return requests.push(axiosClient.get(`/projects/${id}?client_id=${apiKey}`));
     });
+    const requests2 = projectIDs.map(function (id) {
+      return axiosClient.get(`/projects/${id}?client_id=${apiKey}`);
+    });
+    console.log({ requests, requests2 });
+
     const projectsDetailed = yield Promise.all(requests).map(function (request) {
       return request.data.project;
     });
@@ -72,29 +76,48 @@ exports.sourceNodes = (() => {
 
         // Transform the properties that have numbers as keys
         project.covers = Object.entries(project.covers).map(function (cover) {
-          return { size: cover[0], url: cover[1] };
+          return { dimension: cover[0], url: cover[1] };
         });
 
         project.owners = project.owners.map(function (owner) {
-          const images = Object.entries(owner.images).map(function (image) {
-            return { key: image[0], url: image[1] };
+          return _extends({}, owner, {
+            images: Object.entries(owner.images).map(function (image) {
+              return { dimension: image[0], url: image[1] };
+            })
           });
-
-          return _extends({}, owner, { images });
         });
 
         project.modules = project.modules.map(function (module) {
-          const sizes = Object.entries(module.sizes).map(function (size) {
-            return { size: size[0], url: size[1] };
-          });
-          const dimensions = Object.entries(module.dimensions).map(function (dimension) {
-            return { size: dimension[0], dimensions: dimension[1] };
-          });
-          return _extends({}, module, { sizes, dimensions });
+          if (module.type === 'image') {
+            return _extends({}, module, {
+              sizes: Object.entries(module.sizes).map(function (size) {
+                return { dimension: size[0], url: size[1] };
+              }),
+              dimensions: Object.entries(module.dimensions).map(function (dimension) {
+                return _extends({ dimension: dimension[0] }, dimension[1]);
+              })
+            });
+          } else if (module.type === 'media_collection') {
+            return _extends({}, module, {
+              components: module.components.map(function (component) {
+                return _extends({}, component, {
+                  sizes: Object.entries(component.sizes).map(function (size) {
+                    return { dimension: size[0], url: size[1] };
+                  }),
+                  dimensions: Object.entries(component.dimensions).map(function (dimension) {
+                    return _extends({ dimension: dimension[0] }, dimension[1]);
+                  })
+                });
+              })
+            });
+          } else {
+            return module;
+          }
         });
 
         const jsonString = JSON.stringify(project);
 
+        // List out all the fields
         const projectListNode = {
           projectID: project.id,
           name: project.name,
