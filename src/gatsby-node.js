@@ -1,6 +1,16 @@
 const crypto = require(`crypto`)
 const axios = require(`axios`)
 
+// Transform the sizes and dimensions properties (these have numeral keys returned by the Behance API)
+const transformImage = imageObject => ({
+  ...imageObject,
+  sizes: Object.entries(imageObject.sizes).map(arrayToObject),
+  dimensions: Object.entries(imageObject.dimensions)
+  .map(dimension => ({ dimension: dimension[0], ...dimension[1] })),
+})
+
+const arrayToObject = array => ({ dimension: array[0], url: array[1] })
+
 exports.sourceNodes = async ({ boundActionCreators: { createNode } }, { username, apiKey }) => {
   if (!username || !apiKey) {
     throw 'You need to define username and apiKey'
@@ -40,46 +50,24 @@ exports.sourceNodes = async ({ boundActionCreators: { createNode } }, { username
   // Request detailed information about each project
   const requests = projectIDs.map(id => axiosClient.get(`/projects/${id}?client_id=${apiKey}`))
   const projectsDetailed = await Promise.all(requests).map(request => request.data.project)
-
-  // Create node for each project
-  projectsDetailed.map(async project => {
-    // Transform the properties that have numbers as keys
-    project.covers = (
-      Object.entries(project.covers)
-      .map(cover => ({ dimension: cover[0], url: cover[1] }))
-    )
-
-    project.owners = project.owners.map(owner => ({
+  
+  // Transform the properties that have numbers as keys
+  const projectsDetailedTransformed = projectsDetailed.map(project => ({
+    ...project,
+    covers: Object.entries(project.covers).map(arrayToObject),
+    owners: project.owners.map(owner => ({
       ...owner,
-      images: Object.entries(owner.images)
-        .map(image => ({ dimension: image[0], url: image[1] }))
-    }))
-
-    project.modules = project.modules.map(module => {
-      if (module.type === 'image') {
-        return {
-          ...module,
-          sizes: Object.entries(module.sizes)
-            .map(size => ({ dimension: size[0], url: size[1] })),
-          dimensions: Object.entries(module.dimensions)
-            .map(dimension => ({ dimension: dimension[0], ...dimension[1] })),
-          }
-        } else if (module.type === 'media_collection') {
-          return {
-            ...module,
-            components: module.components.map(component => ({
-              ...component,
-              sizes: Object.entries(component.sizes)
-                .map(size => ({ dimension: size[0], url: size[1] })),
-              dimensions: Object.entries(component.dimensions)
-                .map(dimension => ({ dimension: dimension[0], ...dimension[1] })),
-          }))
-        }
-      } else {
-        return module
-      }
+      images: Object.entries(owner.images).map(arrayToObject)
+    })),
+    modules: project.modules.map(module => {
+      if (module.type === 'image') return transformImage(module)
+      if (module.type === 'media_collection') return { ...module, components: module.components.map(transformImage) }
+      return module
     })
-
+  }))
+  
+  // Create node for each project
+  projectsDetailedTransformed.map(async project => {
     const jsonString = JSON.stringify(project)
 
     // List out all the fields
