@@ -6,10 +6,25 @@ const transformImage = imageObject => ({
   ...imageObject,
   sizes: Object.entries(imageObject.sizes).map(arrayToObject),
   dimensions: Object.entries(imageObject.dimensions)
-  .map(dimension => ({ dimension: dimension[0], ...dimension[1] })),
+    .map(dimension => ({ dimension: dimension[0], ...dimension[1] })),
 })
 
 const arrayToObject = array => ({ dimension: array[0], url: array[1] })
+
+// Transform the properties that have numbers as keys
+const transformProject = project => ({
+  ...project,
+  covers: Object.entries(project.covers).map(arrayToObject),
+  owners: project.owners.map(owner => ({
+    ...owner,
+    images: Object.entries(owner.images).map(arrayToObject)
+  })),
+  modules: project.modules.map(module => {
+    if (module.type === 'image') return transformImage(module)
+    if (module.type === 'media_collection') return { ...module, components: module.components.map(transformImage) }
+    return module
+  })
+})
 
 exports.sourceNodes = async ({ boundActionCreators: { createNode } }, { username, apiKey }) => {
   if (!username || !apiKey) {
@@ -44,33 +59,15 @@ exports.sourceNodes = async ({ boundActionCreators: { createNode } }, { username
   const { data: { user } } = await axiosClient.get(`/users/${username}?client_id=${apiKey}`)
   const jsonStringUser = JSON.stringify(user)
 
-  // Collect all IDs of the projects
-  const projectIDs = projects.map(project => project.id)
-
   // Request detailed information about each project
-  const requests = projectIDs.map(id => axiosClient.get(`/projects/${id}?client_id=${apiKey}`))
+  const requests = projects.map(project => axiosClient.get(`/projects/${project.id}?client_id=${apiKey}`))
   const projectsDetailed = await Promise.all(requests).map(request => request.data.project)
   
-  // Transform the properties that have numbers as keys
-  const projectsDetailedTransformed = projectsDetailed.map(project => ({
-    ...project,
-    covers: Object.entries(project.covers).map(arrayToObject),
-    owners: project.owners.map(owner => ({
-      ...owner,
-      images: Object.entries(owner.images).map(arrayToObject)
-    })),
-    modules: project.modules.map(module => {
-      if (module.type === 'image') return transformImage(module)
-      if (module.type === 'media_collection') return { ...module, components: module.components.map(transformImage) }
-      return module
-    })
-  }))
-  
   // Create node for each project
-  projectsDetailedTransformed.map(async project => {
+  projectsDetailed.map(async originalProject => {
+    const project = transformProject(originalProject)
     const jsonString = JSON.stringify(project)
 
-    // List out all the fields
     const projectListNode = {
       projectID: project.id,
       name: project.name,

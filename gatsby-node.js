@@ -7,12 +7,26 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 const crypto = require(`crypto`);
 const axios = require(`axios`);
 
+// Transform the sizes and dimensions properties (these have numeral keys returned by the Behance API)
 const transformImage = imageObject => _extends({}, imageObject, {
   sizes: Object.entries(imageObject.sizes).map(arrayToObject),
   dimensions: Object.entries(imageObject.dimensions).map(dimension => _extends({ dimension: dimension[0] }, dimension[1]))
 });
 
 const arrayToObject = array => ({ dimension: array[0], url: array[1] });
+
+// Transform the properties that have numbers as keys
+const transformProject = project => _extends({}, project, {
+  covers: Object.entries(project.covers).map(arrayToObject),
+  owners: project.owners.map(owner => _extends({}, owner, {
+    images: Object.entries(owner.images).map(arrayToObject)
+  })),
+  modules: project.modules.map(module => {
+    if (module.type === 'image') return transformImage(module);
+    if (module.type === 'media_collection') return _extends({}, module, { components: module.components.map(transformImage) });
+    return module;
+  })
+});
 
 exports.sourceNodes = (() => {
   var _ref = _asyncToGenerator(function* ({ boundActionCreators: { createNode } }, { username, apiKey }) {
@@ -58,42 +72,20 @@ exports.sourceNodes = (() => {
 
     const jsonStringUser = JSON.stringify(user);
 
-    // Collect all IDs of the projects
-    const projectIDs = projects.map(function (project) {
-      return project.id;
-    });
-
     // Request detailed information about each project
-    const requests = projectIDs.map(function (id) {
-      return axiosClient.get(`/projects/${id}?client_id=${apiKey}`);
+    const requests = projects.map(function (project) {
+      return axiosClient.get(`/projects/${project.id}?client_id=${apiKey}`);
     });
     const projectsDetailed = yield Promise.all(requests).map(function (request) {
       return request.data.project;
     });
 
-    // Transform the properties that have numbers as keys
-    const projectsDetailedTransformed = projectsDetailed.map(function (project) {
-      return _extends({}, project, {
-        covers: Object.entries(project.covers).map(arrayToObject),
-        owners: project.owners.map(function (owner) {
-          return _extends({}, owner, {
-            images: Object.entries(owner.images).map(arrayToObject)
-          });
-        }),
-        modules: project.modules.map(function (module) {
-          if (module.type === 'image') return transformImage(module);
-          if (module.type === 'media_collection') return _extends({}, module, { components: module.components.map(transformImage) });
-          return module;
-        })
-      });
-    });
-
     // Create node for each project
-    projectsDetailedTransformed.map((() => {
-      var _ref4 = _asyncToGenerator(function* (project) {
+    projectsDetailed.map((() => {
+      var _ref4 = _asyncToGenerator(function* (originalProject) {
+        const project = transformProject(originalProject);
         const jsonString = JSON.stringify(project);
 
-        // List out all the fields
         const projectListNode = {
           projectID: project.id,
           name: project.name,
