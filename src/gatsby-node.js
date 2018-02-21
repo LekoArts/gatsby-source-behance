@@ -1,23 +1,22 @@
 const crypto = require(`crypto`)
 const axios = require(`axios`)
 
+const dict = arr => Object.assign(...arr.map(([k, v]) => ({['size_' + k]: v})))
+
 // Transform the sizes and dimensions properties (these have numeral keys returned by the Behance API)
 const transformImage = imageObject => ({
   ...imageObject,
-  sizes: Object.entries(imageObject.sizes).map(arrayToObject),
-  dimensions: Object.entries(imageObject.dimensions)
-    .map(dimension => ({ dimension: dimension[0], ...dimension[1] })),
+  sizes: dict(Object.entries(imageObject.sizes)),
+  dimensions: dict(Object.entries(imageObject.dimensions)),
 })
-
-const arrayToObject = array => ({ dimension: array[0], url: array[1] })
 
 // Transform the properties that have numbers as keys
 const transformProject = project => ({
   ...project,
-  covers: Object.entries(project.covers).map(arrayToObject),
+  covers: dict(Object.entries(project.covers)),
   owners: project.owners.map(owner => ({
     ...owner,
-    images: Object.entries(owner.images).map(arrayToObject)
+    images: dict(Object.entries(owner.images))
   })),
   modules: project.modules.map(module => {
     if (module.type === 'image') return transformImage(module)

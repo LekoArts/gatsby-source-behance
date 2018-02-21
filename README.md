@@ -46,7 +46,9 @@ Get all projects of the user:
                 conceived
                 url
                 areas
-                cover
+                covers {
+                    size_original
+                }
                 stats {
                     views
                     appreciations
