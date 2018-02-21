@@ -45,7 +45,12 @@ To see all possible queries please use the GraphiQL editor which is available un
                 modified
                 conceived
                 url
+                privacy
                 areas
+                tags
+                description
+                tools
+                styles
                 covers {
                     size_original
                 }

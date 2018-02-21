@@ -1,6 +1,6 @@
 {
   "name": "gatsby-source-behance",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Gatsby source plugin for loading information from Behance",
   "main": "gatsby-node.js",
   "scripts": {
