@@ -31,7 +31,7 @@ plugins: [
 
 ## GraphQL Queries
 
-Get all projects of the user:
+To see all possible queries please use the GraphiQL editor which is available under ``http://localhost:8000/___graphql``
 
 ```graphql
 {
@@ -49,16 +49,23 @@ Get all projects of the user:
                 covers {
                     size_original
                 }
+                owners
                 stats {
                     views
                     appreciations
                     comments
+                }
+                modules {
+                    sizes {
+                        size_original
+                    }
                 }
             }
         }
     }
 }
 ```
+_This example query fetches the information about the project and the respective images the project has_
 
 Get all user information:
 
