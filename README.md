@@ -33,6 +33,8 @@ plugins: [
 
 To see all possible queries please use the GraphiQL editor which is available under ``http://localhost:8000/___graphql``
 
+### Get all projects:
+
 ```graphql
 {
     allBehanceProjects {
@@ -72,7 +74,7 @@ To see all possible queries please use the GraphiQL editor which is available un
 ```
 _This example query fetches the information about the project and the respective images the project has_
 
-Get all user information:
+### Get all user information:
 
 ```graphql
 {
@@ -113,6 +115,60 @@ Get all user information:
             url
             service_name
             value
+        }
+    }
+}
+```
+
+### Get all collections (of the user specified in the config):
+
+```graphql
+{
+    allBehanceAppreciations {
+        edges {
+            node {
+                id
+                projectID
+                name
+                projectCount
+                data
+                public
+                created
+                updated
+                modified
+                url
+                covers {
+                    size2 {
+                        url
+                    }
+                    size3 {
+                        url
+                    }
+                }
+                owners {
+                    username
+                    city
+                }
+                isOwner
+                isCoOwner
+                multipleOwners
+                galleryText
+                stats
+                creatorID
+                userID
+                projects {
+                    id
+                    name
+                    published_on
+                    created_on
+                    modified_on
+                    url
+                    fields
+                    covers {
+                        size_original
+                    }
+                }
+            }
         }
     }
 }

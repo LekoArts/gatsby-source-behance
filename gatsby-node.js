@@ -28,6 +28,22 @@ const transformProject = project => _extends({}, project, {
   })
 });
 
+const transformAppreciation = appreciation => _extends({}, appreciation, {
+  owners: appreciation.owners.map(owner => _extends({}, owner, {
+    images: dict(Object.entries(owner.images))
+  })),
+  covers: appreciation.project_covers.reduce((acc, cur, i) => {
+    acc['size' + i] = cur;
+    return acc;
+  }, {}),
+  projects: appreciation.latest_projects.map(project => _extends({}, project, {
+    owners: project.owners.map(owner => _extends({}, owner, {
+      images: dict(Object.entries(owner.images))
+    })),
+    covers: dict(Object.entries(project.covers))
+  }))
+});
+
 exports.sourceNodes = (() => {
   var _ref = _asyncToGenerator(function* ({ boundActionCreators: { createNode } }, { username, apiKey }) {
     if (!username || !apiKey) {
@@ -41,7 +57,7 @@ exports.sourceNodes = (() => {
     // Thanks to https://github.com/Jedidiah/gatsby-source-twitch/blob/master/src/gatsby-node.js
     // and https://stackoverflow.com/questions/43482639/throttling-axios-requests
     const rateLimit = 500;
-    let lastCalled = undefined;
+    let lastCalled;
 
     const rateLimiter = function rateLimiter(call) {
       const now = Date.now();
@@ -66,9 +82,13 @@ exports.sourceNodes = (() => {
 
     const projects = _ref2.data.projects;
 
-    var _ref3 = yield axiosClient.get(`/users/${username}?client_id=${apiKey}`);
+    var _ref3 = yield axiosClient.get(`/users/${username}/collections?client_id=${apiKey}`);
 
-    const user = _ref3.data.user;
+    const collections = _ref3.data.collections;
+
+    var _ref4 = yield axiosClient.get(`/users/${username}?client_id=${apiKey}`);
+
+    const user = _ref4.data.user;
 
     const jsonStringUser = JSON.stringify(user);
 
@@ -82,7 +102,7 @@ exports.sourceNodes = (() => {
 
     // Create node for each project
     projectsDetailed.map((() => {
-      var _ref4 = _asyncToGenerator(function* (originalProject) {
+      var _ref5 = _asyncToGenerator(function* (originalProject) {
         const project = transformProject(originalProject);
         const jsonString = JSON.stringify(project);
 
@@ -112,7 +132,6 @@ exports.sourceNodes = (() => {
           tools: project.tools,
           styles: project.styles,
           creatorID: project.creator_id,
-
           children: [],
           id: project.id.toString(),
           parent: `__SOURCE__`,
@@ -121,12 +140,56 @@ exports.sourceNodes = (() => {
             contentDigest: crypto.createHash(`md5`).update(jsonString).digest(`hex`)
           }
         };
-
         createNode(projectListNode);
       });
 
       return function (_x3) {
-        return _ref4.apply(this, arguments);
+        return _ref5.apply(this, arguments);
+      };
+    })());
+
+    collections.map((() => {
+      var _ref6 = _asyncToGenerator(function* (originalAppreciation) {
+        const appreciation = transformAppreciation(originalAppreciation);
+        const jsonString = JSON.stringify(appreciation);
+
+        const appreciationNode = {
+          projectID: appreciation.id,
+          name: appreciation.title,
+          projectCount: appreciation.project_count,
+          followerCount: appreciation.followerCount,
+          data: appreciation.data,
+          public: appreciation.public,
+          created: appreciation.created_on,
+          updated: appreciation.updated_on,
+          modified: appreciation.modified_on,
+          url: appreciation.url,
+          covers: appreciation.covers,
+          projects: appreciation.projects,
+          matureContent: appreciation.mature_content,
+          matureAccess: appreciation.mature_access,
+          owners: appreciation.owners,
+          isOwner: appreciation.is_owner,
+          isCoOwner: appreciation.is_coowner,
+          multipleOwners: appreciation.multiple_owners,
+          galleryText: appreciation.gallery_text,
+          stats: appreciation.stats,
+          conceived: appreciation.conceived_on,
+          creatorID: appreciation.creator_id,
+          userID: appreciation.user_id,
+          children: [],
+          id: appreciation.id.toString(),
+          parent: `__SOURCE__`,
+          internal: {
+            type: `BehanceAppreciations`,
+            contentDigest: crypto.createHash(`md5`).update(jsonString).digest(`hex`)
+          }
+        };
+        createNode(appreciationNode);
+      });
+
+      return function (_x4) {
+        return _ref6.apply(this, arguments);
       };
     })());
 
@@ -161,7 +224,6 @@ exports.sourceNodes = (() => {
         contentDigest: crypto.createHash(`md5`).update(jsonStringUser).digest(`hex`)
       }
     };
-
     createNode(userNode);
   });
 
