@@ -1,35 +1,30 @@
 {
-  "name": "gatsby-source-behance",
-  "version": "2.0.1",
-  "description": "Gatsby source plugin for loading information from Behance",
-  "main": "gatsby-node.js",
-  "scripts": {
-    "build": "babel src --out-dir ."
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/LeKoArts/gatsby-source-behance"
-  },
-  "bugs": {
-    "url": "https://github.com/LeKoArts/gatsby-source-behance/issues"
-  },
-  "homepage": "https://github.com/LeKoArts/gatsby-source-behance",
-  "keywords": [
-    "gatsby",
-    "gatsby-plugin",
-    "gatsby-source-plugin",
-    "behance"
-  ],
-  "author": "LekoArts <hello@lekoarts.de>",
-  "license": "MIT",
-  "dependencies": {
-    "axios": "^0.18.0",
-    "babel-eslint": "^8.2.2",
-    "eslint": "^4.18.1"
-  },
-  "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-plugin-transform-object-rest-spread": "^6.26.0",
-    "babel-preset-env": "^1.6.1"
-  }
+    "name": "gatsby-source-behance",
+    "version": "2.0.2",
+    "description": "Gatsby source plugin for loading information from Behance",
+    "main": "gatsby-node.js",
+    "scripts": {
+        "build": "babel src --out-dir ."
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/LeKoArts/gatsby-source-behance"
+    },
+    "bugs": {
+        "url": "https://github.com/LeKoArts/gatsby-source-behance/issues"
+    },
+    "homepage": "https://github.com/LeKoArts/gatsby-source-behance",
+    "keywords": ["gatsby", "gatsby-plugin", "gatsby-source-plugin", "behance"],
+    "author": "LekoArts <hello@lekoarts.de>",
+    "license": "MIT",
+    "dependencies": {
+        "axios": "^0.18.0",
+        "babel-eslint": "^8.2.2",
+        "eslint": "^4.18.2"
+    },
+    "devDependencies": {
+        "babel-cli": "^6.26.0",
+        "babel-plugin-transform-object-rest-spread": "^6.26.0",
+        "babel-preset-env": "^1.6.1"
+    }
 }

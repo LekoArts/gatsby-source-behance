@@ -33,7 +33,7 @@ plugins: [
 
 To see all possible queries please use the GraphiQL editor which is available under ``http://localhost:8000/___graphql``
 
-### Get all projects:
+### Get all projects (of the user specified in the config):
 
 ```graphql
 {
