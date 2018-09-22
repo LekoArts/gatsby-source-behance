@@ -1,6 +1,6 @@
 {
     "name": "gatsby-source-behance",
-    "version": "3.0.0",
+    "version": "3.0.2",
     "description": "Gatsby source plugin for loading information from Behance",
     "main": "gatsby-node.js",
     "scripts": {
@@ -16,16 +16,21 @@
         "url": "https://github.com/LeKoArts/gatsby-source-behance/issues"
     },
     "homepage": "https://github.com/LeKoArts/gatsby-source-behance",
-    "keywords": ["gatsby", "gatsby-plugin", "gatsby-source-plugin", "behance"],
+    "keywords": [
+        "gatsby",
+        "gatsby-plugin",
+        "gatsby-source-plugin",
+        "behance"
+    ],
     "author": "LekoArts <hello@lekoarts.de>",
     "license": "MIT",
     "dependencies": {
-        "axios": "^0.18.0",
-        "babel-runtime": "^6.26.0"
+        "axios": "^0.18.0"
     },
     "devDependencies": {
         "babel-cli": "^6.26.0",
         "babel-eslint": "^9.0.0",
+        "babel-plugin-transform-object-rest-spread": "^6.26.0",
         "babel-preset-env": "^1.7.0",
         "babel-preset-stage-0": "^6.24.1",
         "cross-env": "^5.1.4",

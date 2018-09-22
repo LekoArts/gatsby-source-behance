@@ -51,7 +51,7 @@ exports.sourceNodes = async ({ actions: { createNode } }, { username, apiKey }) 
   }
 
   const axiosClient = axios.create({
-    baseURL: `https://api.behance.net/v2/`,
+    baseURL: `https://www.behance.net/v2/`,
   });
 
   // Thanks to https://github.com/Jedidiah/gatsby-source-twitch/blob/master/src/gatsby-node.js
@@ -76,17 +76,17 @@ exports.sourceNodes = async ({ actions: { createNode } }, { username, apiKey }) 
 
   const {
     data: { projects },
-  } = await axiosClient.get(`/users/${username}/projects?client_id=${apiKey}`);
+  } = await axiosClient.get(`/users/${username}/projects?api_key=${apiKey}`);
   const {
     data: { collections },
-  } = await axiosClient.get(`/users/${username}/collections?client_id=${apiKey}`);
+  } = await axiosClient.get(`/users/${username}/collections?api_key=${apiKey}`);
   const {
     data: { user },
-  } = await axiosClient.get(`/users/${username}?client_id=${apiKey}`);
+  } = await axiosClient.get(`/users/${username}?api_key=${apiKey}`);
   const jsonStringUser = JSON.stringify(user);
 
   // Request detailed information about each project
-  const requests = projects.map(project => axiosClient.get(`/projects/${project.id}?client_id=${apiKey}`));
+  const requests = projects.map(project => axiosClient.get(`/projects/${project.id}?api_key=${apiKey}`));
   const projectsDetailed = await Promise.all(requests).map(request => request.data.project);
 
   // Create node for each project
