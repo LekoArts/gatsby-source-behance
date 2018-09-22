@@ -1,7 +1,7 @@
 const crypto = require(`crypto`);
 const axios = require(`axios`);
 
-const dict = arr => Object.assign(...arr.map(([k, v]) => ({ ['size_' + k]: v })));
+const dict = arr => Object.assign(...arr.map(([k, v]) => ({ [`size_${k}`]: v })));
 
 // Transform the sizes and dimensions properties (these have numeral keys returned by the Behance API)
 const transformImage = imageObject => ({
@@ -32,7 +32,7 @@ const transformAppreciation = appreciation => ({
     images: dict(Object.entries(owner.images)),
   })),
   covers: appreciation.project_covers.reduce((acc, cur, i) => {
-    acc['size'+i] = cur;
+    acc[`size${i}`] = cur;
     return acc;
   }, {}),
   projects: appreciation.latest_projects.map(project => ({
@@ -45,9 +45,9 @@ const transformAppreciation = appreciation => ({
   })),
 });
 
-exports.sourceNodes = async ({ boundActionCreators: { createNode } }, { username, apiKey }) => {
+exports.sourceNodes = async ({ actions: { createNode } }, { username, apiKey }) => {
   if (!username || !apiKey) {
-    throw 'You need to define username and apiKey';
+    throw new Error('You need to define username and apiKey');
   }
 
   const axiosClient = axios.create({
@@ -74,9 +74,15 @@ exports.sourceNodes = async ({ boundActionCreators: { createNode } }, { username
 
   axiosClient.interceptors.request.use(rateLimiter);
 
-  const { data: { projects } } = await axiosClient.get(`/users/${username}/projects?client_id=${apiKey}`);
-  const { data: { collections } } = await axiosClient.get(`/users/${username}/collections?client_id=${apiKey}`);
-  const { data: { user } } = await axiosClient.get(`/users/${username}?client_id=${apiKey}`);
+  const {
+    data: { projects },
+  } = await axiosClient.get(`/users/${username}/projects?client_id=${apiKey}`);
+  const {
+    data: { collections },
+  } = await axiosClient.get(`/users/${username}/collections?client_id=${apiKey}`);
+  const {
+    data: { user },
+  } = await axiosClient.get(`/users/${username}?client_id=${apiKey}`);
   const jsonStringUser = JSON.stringify(user);
 
   // Request detailed information about each project
